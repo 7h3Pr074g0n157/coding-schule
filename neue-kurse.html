@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Neue Kurse - Coding Schule</title>
+  </head>
+  <body>
+    <h1>Neuer Kurs</h1>
+    <form action="/neuer-kurs" method="POST">
+      <label for="kurs-name">Kursname</label>
+      <br />
+      <input type="text" id="kurs-name" name="kursName" />
+      <br />
+      <br />
+      <label for="kurs-beschreibung">Kursbeschreibung:</label>
+      <br />
+      <textarea
+        name="kursBeschreibung"
+        id="kurs-beschreibung"
+        cols="30"
+        rows="10"
+      ></textarea>
+      <br />
+      <br />
+      <button type="submit">Send</button>
+    </form>
+  </body>
+</html>
