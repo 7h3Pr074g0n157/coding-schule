@@ -4,6 +4,7 @@ const fs = require('fs');
 const form = fs.readFileSync('./neue-kurse.html', 'utf-8');
 let courseList = fs.readFileSync('./kurs-liste.json');
 courseList = JSON.parse(courseList);
+
 let tempCard = fs.readFileSync('./template-card.html').toString();
 let courseCards = fs.readFileSync('./kurs-karten.html').toString();
 
@@ -41,19 +42,20 @@ const server = http.createServer((req, res) => {
       courseList = JSON.stringify(courseList);
       fs.writeFileSync('./kurs-liste.json', courseList);
     });
-    res.writeHead(302, { 'Content-type': 'text/html', Encoding: 'utf-8' });
+    // FIXME: Die im Event-Handler in das json geschriebenen Daten werden nicht sofort ausgelesen.
+    // Wenn das Problem gelöst ist, das Lesen noch in async ändern.
+    let newCourseList = fs.readFileSync('./kurs-liste.json');
+    newCourseList = JSON.parse(newCourseList);
 
-    let output = courseList
+    let output = newCourseList
       .map(el => {
         return replaceTemplates(tempCard, el);
       })
       .toString();
 
     courseCards = courseCards.replace(/{%CARDS%}/, output);
-    console.log(courseCards);
 
     res.write(courseCards);
-
     return res.end();
   }
 });
