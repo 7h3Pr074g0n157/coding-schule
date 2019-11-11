@@ -1,15 +1,16 @@
-const http = require('http');
-const fs = require('fs');
+const http = require('http'),
+  fs = require('fs');
 
-const form = fs.readFileSync('./neue-kurse.html', 'utf-8');
-let courseList = fs.readFileSync('./kurs-liste.json');
+let form, tempCards, tempCourseList;
+(form = fs.readFileSync('./form-new-courses.html', 'utf-8')),
+  (tempCards = fs.readFileSync('./template-cards.html', 'utf-8').toString()),
+  (tempCourseList = fs.readFileSync('./template-course-list.html', 'utf-8').toString());
+
+let courseList = fs.readFileSync('./course-list.json');
 courseList = JSON.parse(courseList);
 
-let tempCard = fs.readFileSync('./template-card.html').toString();
-let courseCards = fs.readFileSync('./kurs-karten.html').toString();
-
-function replaceTemplates(tempCard, courseCard) {
-  let output = tempCard.replace(/{%NAME%}/g, courseCard.name);
+function replaceTemplates(tempCards, courseCard) {
+  let output = tempCards.replace(/{%NAME%}/g, courseCard.name);
   output = output.replace(/{%BESCHREIBUNG%}/g, courseCard.beschreibung);
   return output;
 }
@@ -26,37 +27,34 @@ const server = http.createServer((req, res) => {
       body.push(chunk);
     });
     req.on('end', () => {
-      let parsedBody = Buffer.concat(body).toString();
+      let parsedBody = Buffer.concat(body)
+        .toString()
+        .split('&');
 
-      parsedBody = parsedBody.split('&');
+      let courseName = parsedBody[0].split('=')[1].replace(/[^\w]/g, ' ');
+      let courseDescription = parsedBody[1].split('=')[1].replace(/[^\w]/g, ' ');
       let newCourse = {
         id: courseList.length,
-        name: parsedBody[0].split('=')[1],
-        beschreibung: parsedBody[1]
-          .split('=')[1]
-          .split('+')
-          .join(' ')
+        name: courseName,
+        beschreibung: courseDescription
       };
       courseList.push(newCourse);
-
       courseList = JSON.stringify(courseList);
-      fs.writeFileSync('./kurs-liste.json', courseList);
+      fs.writeFileSync('./course-list.json', courseList);
+
+      let newCourseList = JSON.parse(fs.readFileSync('./course-list.json'));
+
+      let output = newCourseList
+        .map(course => {
+          return replaceTemplates(tempCards, course);
+        })
+        .toString();
+
+      tempCourseList = tempCourseList.replace(/{%CARDS%}/, output);
+
+      res.writeHead(200);
+      res.write(tempCourseList);
     });
-    // FIXME: Die im Event-Handler in das json geschriebenen Daten werden nicht sofort ausgelesen.
-    // Wenn das Problem gelöst ist, das Lesen noch in async ändern.
-    let newCourseList = fs.readFileSync('./kurs-liste.json');
-    newCourseList = JSON.parse(newCourseList);
-
-    let output = newCourseList
-      .map(el => {
-        return replaceTemplates(tempCard, el);
-      })
-      .toString();
-
-    courseCards = courseCards.replace(/{%CARDS%}/, output);
-
-    res.write(courseCards);
-    return res.end();
   }
 });
 
